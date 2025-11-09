@@ -1,27 +1,32 @@
 package org.example.numbergenerator.policy.service;
 
-import jakarta.transaction.Transactional;
+import java.util.Objects;
+
 import org.example.numbergenerator.policy.model.PolicyNumberGenerator;
 import org.example.numbergenerator.policy.repository.PolicyNumberGeneratorRepository;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.support.atomic.RedisAtomicLong;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 @Service
 public class PolicyNumberGeneratorService {
 
-    private final PolicyNumberGeneratorRepository policyNumberGeneratorRepository;
+    private static final String POLICY_COUNTER_KEY = "number-generator:policy:sequence";
 
-    public PolicyNumberGeneratorService(PolicyNumberGeneratorRepository counterRepository) {
+    private final PolicyNumberGeneratorRepository policyNumberGeneratorRepository;
+    private final @NonNull RedisConnectionFactory redisConnectionFactory;
+
+    public PolicyNumberGeneratorService(PolicyNumberGeneratorRepository counterRepository,
+                                        @NonNull RedisConnectionFactory redisConnectionFactory) {
         this.policyNumberGeneratorRepository = counterRepository;
+        this.redisConnectionFactory = Objects.requireNonNull(redisConnectionFactory, "redisConnectionFactory must not be null");
     }
 
-    @Transactional
-    public synchronized String generateNextPolicyNumber() {
-        PolicyNumberGenerator counter = policyNumberGeneratorRepository.findById("policy")
-                .orElseGet(() -> new PolicyNumberGenerator("policy", 0L));
-
-        long next = counter.getValue() + 1;
-        counter.setValue(next);
-        policyNumberGeneratorRepository.save(counter);
+    public String generateNextPolicyNumber() {
+        RedisAtomicLong counter = new RedisAtomicLong(POLICY_COUNTER_KEY, redisConnectionFactory);
+        long next = counter.incrementAndGet();
+        policyNumberGeneratorRepository.save(new PolicyNumberGenerator("policy", next));
 
         return String.format("SG/08/%010d", next);
     }

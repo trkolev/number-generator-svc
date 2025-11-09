@@ -1,12 +1,13 @@
 package org.example.numbergenerator.policy.model;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.redis.core.RedisHash;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity
+@RedisHash("policyNumberGenerator")
 @Getter
 @Setter
 @AllArgsConstructor
@@ -16,7 +17,6 @@ public class PolicyNumberGenerator {
     @Id
     private String policy;
 
-    @Column(nullable = false)
     private Long value;
 
 }
