@@ -26,7 +26,10 @@ public class ClaimNumberGeneratorService {
     public String generateNextClaimNumber() {
         RedisAtomicLong counter = new RedisAtomicLong(CLAIM_COUNTER_KEY, redisConnectionFactory);
         long next = counter.incrementAndGet();
-        claimNumberGeneratorRepository.save(new ClaimNumberGenerator("claim", next));
+        ClaimNumberGenerator generator = new ClaimNumberGenerator();
+        generator.setClaim("claim");
+        generator.setValue(Long.valueOf(next));
+        claimNumberGeneratorRepository.save(generator);
 
         return String.format("Cl-%010d", next);
     }

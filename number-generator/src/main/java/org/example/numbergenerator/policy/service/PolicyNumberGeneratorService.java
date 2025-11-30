@@ -26,7 +26,10 @@ public class PolicyNumberGeneratorService {
     public String generateNextPolicyNumber() {
         RedisAtomicLong counter = new RedisAtomicLong(POLICY_COUNTER_KEY, redisConnectionFactory);
         long next = counter.incrementAndGet();
-        policyNumberGeneratorRepository.save(new PolicyNumberGenerator("policy", next));
+        PolicyNumberGenerator generator = new PolicyNumberGenerator();
+        generator.setPolicy("policy");
+        generator.setValue(Long.valueOf(next));
+        policyNumberGeneratorRepository.save(generator);
 
         return String.format("SG/08/%010d", next);
     }
